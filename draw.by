@@ -1,1 +1,98 @@
 
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+
+# In[41]:
+
+
+#要读取的文件
+df_bridge = pd.read_excel("./test.xlsx", skiprows=0)
+df_bridge
+
+
+# In[42]:
+
+
+
+
+# Function to draw a cross-section of a steel-concrete composite bridge with X-centroids at 0, the beam directly under the slab, and two top plates for the beam centered over the webs
+def draw_bridge_cross_section(ax, slab_thickness, slab_width, beam_width, beam_height, bottom_plate_thickness, top_plate_thickness, web_thickness,top_plate_width):
+    # Calculate the positions of the slab and the beam along the X-axis
+    slab_x_position = -slab_width / 2
+    beam_x_position = -beam_width / 2
+    #top_plate_width = 1200  # Each top plate is 300mm wide
+
+    # Draw the concrete slab
+    slab = patches.Rectangle((slab_x_position, beam_height+1), slab_width, slab_thickness, linewidth=1, edgecolor='g', facecolor='r')
+    ax.add_patch(slab)
+    
+    
+   
+    # Draw the steel beam
+    # Top plates
+    left_top_plate = patches.Rectangle((beam_x_position-(top_plate_width-web_thickness)/2, beam_height-top_plate_thickness), top_plate_width, top_plate_thickness, linewidth=1, edgecolor='b', facecolor='b')
+    ax.add_patch(left_top_plate)
+    right_top_plate = patches.Rectangle((beam_x_position+beam_width-(top_plate_width+web_thickness)/2, beam_height-top_plate_thickness), top_plate_width, top_plate_thickness, linewidth=1, edgecolor='b', facecolor='b')
+    ax.add_patch(right_top_plate)
+    
+    
+    # Bottom plate
+    bottom_plate = patches.Rectangle((beam_x_position, 0), beam_width, bottom_plate_thickness, linewidth=1, edgecolor='b', facecolor='b')
+    ax.add_patch(bottom_plate)
+    
+    
+    # Webs
+    #ax.plot([beam_x_position, beam_x_position], [bottom_plate_thickness, beam_height-top_plate_thickness], color='b')
+
+    left_web_plate = patches.Rectangle((beam_x_position, bottom_plate_thickness), web_thickness, beam_height-top_plate_thickness-bottom_plate_thickness, linewidth=1, edgecolor='b', facecolor='b')
+    ax.add_patch(left_web_plate)
+    right_web_plate = patches.Rectangle((beam_x_position-web_thickness+beam_width, bottom_plate_thickness),web_thickness, beam_height-top_plate_thickness-bottom_plate_thickness, linewidth=1, edgecolor='b', facecolor='b')
+    ax.add_patch(right_web_plate)
+    #ax.plot([beam_x_position+beam_width, beam_x_position+beam_width], [bottom_plate_thickness, beam_height-top_plate_thickness], color='b')
+     
+    ax.set_ylim(ymin = -200, ymax = 3000)
+    ax.set_xlim(xmin = -4000, xmax = 4000)
+
+    
+# Load the dataframe
+
+
+# Loop through all rows in the dataframe and generate a cross-section plot for each row
+for i in range(len(df_bridge)):
+    try:
+        # Fetch parameters from the current row
+        slab_thickness = float(df_bridge.loc[i, 'slab_thickness'])
+        slab_width = float(df_bridge.loc[i, 'slab_width'])
+        beam_width = float(df_bridge.loc[i, 'beam_width'])
+        beam_height = float(df_bridge.loc[i, 'beam_height'])
+        bottom_plate_thickness = float(df_bridge.loc[i, 'bottom_plate_thickness'])
+        top_plate_thickness = float(df_bridge.loc[i, 'top_plate_thickness'])
+        web_thickness = float(df_bridge.loc[i, 'web_thickness'])
+        top_plate_width = float(df_bridge.loc[i, 'top_plate_width'])
+
+        # Create a new figure
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Draw the cross-section
+        draw_bridge_cross_section(ax, slab_thickness, slab_width, beam_width, beam_height, bottom_plate_thickness, top_plate_thickness, web_thickness,top_plate_width)
+
+        # Set aspect ratio to be equal, so the bridge looks symmetrical
+        ax.set_aspect('equal', 'box')
+
+        # Set labels and title
+        ax.set_xlabel('Width (mm)')
+        ax.set_ylabel('Height (mm)')
+        ax.set_title(f'Cross-section of a steel-concrete composite bridge (Row {i+1})')
+        
+        filename = './output/'+str(i)+'.png'
+        
+        plt.savefig(filename)
+
+        plt.show()
+    except Exception as e:
+        print(f"Error on row {i+1}: {e}")
+
+
